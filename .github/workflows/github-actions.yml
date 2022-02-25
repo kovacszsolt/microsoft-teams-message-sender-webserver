@@ -1,0 +1,44 @@
+name: Deploy to NPMJS.ORG
+on: [push]
+jobs:
+  create-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: install npm modules
+        run: npm i
+      - name: cache
+        env:
+          cache-name: cache-node-modules
+        id: cache-packages
+        uses: actions/cache@v2
+        with:
+          key:  ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact_app
+          path: ./
+
+  create-npm-package:
+    needs: create-artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: get Data From Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: artifact_app
+          path: ./
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build the tagged Docker image
+        run: docker build . --file Dockerfile --tag kovacszsolt/microsoft-teams-message-sender-webserver:latest
