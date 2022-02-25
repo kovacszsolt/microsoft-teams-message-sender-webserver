@@ -42,3 +42,5 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build the tagged Docker image
         run: docker build . --file Dockerfile --tag kovacszsolt/microsoft-teams-message-sender-webserver:latest
+      - name: Publish the Docker image to DockerHub
+        run: docker push kovacszsolt/microsoft-teams-message-sender-webserver:latest
